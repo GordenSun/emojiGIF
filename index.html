@@ -217,7 +217,7 @@
 <!-- 购买弹窗 -->
 <div id="payModal" class="modal hidden">
   <div class="box">
-    <div class="hd"><h3>购买生成次数</h3><button class="x" data-close="payModal">×</button></div>
+    <div class="hd"><h3 id="payTitle">购买生成次数</h3><button class="x" data-close="payModal">×</button></div>
     <div id="payStep1">
       <div class="wx-tip">支付成功后请重新打开链接进入</div>
       <div class="plans" id="plans"></div>
@@ -233,7 +233,6 @@
       </div>
     </div>
     <div id="payStep3" class="hidden">
-      <div class="wx-tip">支付成功后请重新打开链接进入</div>
       <div class="alert ok">支付成功！您的兑换码（已自动填入，请保存）：</div>
       <div class="code-show" id="payCode" style="margin-top:10px"></div>
       <div class="hint" style="text-align:center;margin-top:8px">可生成 <b id="payTimes"></b> 次</div>
@@ -558,6 +557,7 @@
     $('plans').querySelectorAll('.plan').forEach(el => el.onclick = () => { selectedPlan = el.dataset.plan; renderPlans(); });
   }
   function openPay() {
+    $('payTitle').textContent = '购买生成次数';
     $('payStep1').classList.remove('hidden'); $('payStep2').classList.add('hidden'); $('payStep3').classList.add('hidden');
     renderPlans(); openModal('payModal');
   }
@@ -600,6 +600,7 @@
     localStorage.removeItem(LS.order);
     $('codeInput').value = d.code; localStorage.setItem(LS.code, d.code);
     expandCode(); $('freeOut').classList.add('hidden');
+    $('payTitle').textContent = '支付成功';
     $('payStep1').classList.add('hidden'); $('payStep2').classList.add('hidden'); $('payStep3').classList.remove('hidden');
     $('payCode').textContent = d.code; $('payTimes').textContent = d.times;
     if ($('payModal').classList.contains('hidden')) openModal('payModal');
