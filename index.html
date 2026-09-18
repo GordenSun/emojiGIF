@@ -114,6 +114,8 @@
   .msgbox{text-align:center;padding:6px 4px 2px}
   .msgbox .ic{width:44px;height:44px;border-radius:50%;background:var(--yellow);border:1.5px solid var(--ink);display:inline-flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:10px}
   .msgbox p{margin:0 0 16px;font-size:15px}
+  .wx-tip{display:none;margin:0 0 12px;padding:10px 12px;border-radius:var(--r);background:var(--orange);color:#fff;border:1.5px solid var(--ink);font-weight:700;font-size:15px;text-align:center;box-shadow:var(--shadow-sm)}
+  body.wechat .wx-tip{display:block}
 </style>
 </head>
 <body>
@@ -217,11 +219,13 @@
   <div class="box">
     <div class="hd"><h3>购买生成次数</h3><button class="x" data-close="payModal">×</button></div>
     <div id="payStep1">
+      <div class="wx-tip">支付成功后请重新打开链接进入</div>
       <div class="plans" id="plans"></div>
       <div class="hint" style="margin-top:10px">支付成功后自动获得兑换码并填入输入框，请妥善保存兑换码。</div>
       <button class="btn primary" id="payBtn" style="margin-top:14px">微信支付</button>
     </div>
     <div id="payStep2" class="hidden">
+      <div class="wx-tip">支付成功后请重新打开链接进入</div>
       <div class="qr">
         <div id="qrWrap"><div class="progress"><div class="spinner"></div>正在生成支付二维码…</div></div>
         <div class="hint" id="qrTip">请使用微信扫码支付，支付完成后本页自动到账</div>
@@ -229,6 +233,7 @@
       </div>
     </div>
     <div id="payStep3" class="hidden">
+      <div class="wx-tip">支付成功后请重新打开链接进入</div>
       <div class="alert ok">支付成功！您的兑换码（已自动填入，请保存）：</div>
       <div class="code-show" id="payCode" style="margin-top:10px"></div>
       <div class="hint" style="text-align:center;margin-top:8px">可生成 <b id="payTimes"></b> 次</div>
@@ -307,6 +312,7 @@
 
   // ===================== 初始化 =====================
   async function init() {
+    if (isWeChat) document.body.classList.add('wechat');
     $('codeInput').value = localStorage.getItem(LS.code) || '';
     try {
       cfg = await apiFetch('/api/config');
@@ -564,7 +570,10 @@
       const d = await apiFetch('/api/payment/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: selectedPlan, return_url: returnUrl }) });
       if (!d.success) return toast(d.message || '支付创建失败，请重试');
       localStorage.setItem(LS.order, d.order_id);
-      if ((isMobile || isWeChat) && d.url) { location.href = d.url; return; }
+      if ((isMobile || isWeChat) && d.url) {
+        if (isWeChat) { toast('支付成功后请重新打开链接进入', 2500); await new Promise(r => setTimeout(r, 1800)); }
+        location.href = d.url; return;
+      }
       $('payStep1').classList.add('hidden'); $('payStep2').classList.remove('hidden');
       if (d.url_qrcode) {
         $('qrWrap').innerHTML = `<img src="${esc(d.url_qrcode)}" alt="微信支付二维码">`;
