@@ -168,8 +168,7 @@
       <div class="chip active" data-v="random" id="actRandom">随机动作</div>
       <div class="chip" data-v="custom" id="actCustom">自定义动作</div>
     </div>
-    <input type="text" id="actionInput" style="margin-top:8px" placeholder="输入角色要做的表情动作，如：比心（输入后以输入为准）" maxlength="40">
-    <div class="hint" id="actionHint">当前：随机动作</div>
+    <input type="text" id="actionInput" class="hidden" style="margin-top:8px" placeholder="输入角色要做的表情动作，如：比心" maxlength="40">
 
     <label class="lbl"><span class="n">4</span>表情文字<small>选填</small></label>
     <div class="seg" id="textSeg">
@@ -409,15 +408,14 @@
 
   // ===================== 画风 / 动作 / 文字 =====================
   $('styleSel').onchange = () => $('customStyle').classList.toggle('hidden', $('styleSel').value !== 'custom');
-  function syncAction() {
-    const v = $('actionInput').value.trim();
-    $('actRandom').classList.toggle('active', !v);
-    $('actCustom').classList.toggle('active', !!v);
-    $('actionHint').textContent = v ? `当前：${v}` : '当前：随机动作';
-  }
-  $('actionInput').addEventListener('input', syncAction);
-  $('actRandom').onclick = () => { $('actionInput').value = ''; syncAction(); };
-  $('actCustom').onclick = () => { $('actionInput').focus(); };
+  let actionMode = 'random';
+  $('actSeg').querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    $('actSeg').querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active'); actionMode = c.dataset.v;
+    $('actionInput').classList.toggle('hidden', actionMode !== 'custom');
+    if (actionMode === 'custom') $('actionInput').focus();
+  });
+  function actionValue() { return actionMode === 'custom' ? $('actionInput').value.trim() : ''; }
   $('textSeg').querySelectorAll('.chip').forEach(c => c.onclick = () => {
     $('textSeg').querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
     c.classList.add('active'); textMode = c.dataset.v;
@@ -432,6 +430,7 @@
     if (!fileBlob) { showMsg('请先上传角色参考图片'); $('upload').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     const style = $('styleSel').value;
     if (style === 'custom' && !$('customStyle').value.trim()) return showMsg('请输入画风');
+    if (actionMode === 'custom' && !$('actionInput').value.trim()) return showMsg('请输入表情动作，或选择"随机动作"');
     if (textMode === 'custom' && !$('textInput').value.trim()) return showMsg('请输入表情文字，或选择"无"/"AI发挥"');
     if (tab === 'batch' && !currentCode()) { expandCode(); return popup('免费模式仅支持单次生成，批量生成请输入付费兑换码'); }
     let count = 1;
@@ -444,7 +443,7 @@
     fd.append('count', String(count));
     fd.append('style', style);
     fd.append('custom_style', $('customStyle').value.trim());
-    fd.append('action', $('actionInput').value.trim());
+    fd.append('action', actionValue());
     fd.append('text_mode', textMode);
     fd.append('text', $('textInput').value.trim());
 
