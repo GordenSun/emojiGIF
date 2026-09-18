@@ -21,7 +21,7 @@
   .wrap{max-width:640px;margin:0 auto;padding:18px 14px 60px}
   header{position:relative;padding:26px 0 14px;text-align:center}
   h1{font-family:var(--serif);font-size:34px;line-height:1.1;margin:0;font-weight:700;letter-spacing:.5px}
-  h1 em{font-style:italic;color:var(--orange)}
+  h1 em{font-style:normal;color:var(--orange)}
   .author{margin-top:10px;font-family:var(--mono);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
   .author b{color:var(--ink);font-weight:600;user-select:all;letter-spacing:.5px}
   .top-actions{position:absolute;right:0;top:22px}
@@ -52,10 +52,14 @@
   .row>.fix{flex:0 0 auto}
   .tabs{display:flex;gap:8px;margin-top:16px}
   .tab{flex:1;text-align:center;padding:11px;border-radius:var(--r);border:1.5px solid var(--ink);font-weight:700;color:var(--ink);cursor:pointer;font-size:15px;background:var(--paper);font-family:var(--serif)}
+  .tab{position:relative}
   .tab.active{background:var(--ink);color:var(--yellow);box-shadow:var(--shadow-sm)}
+  .tab.active::after{content:"✓";position:absolute;top:-9px;right:-7px;width:22px;height:22px;line-height:20px;border-radius:50%;background:var(--yellow);border:1.5px solid var(--ink);color:var(--ink);font-size:13px;font-weight:700;font-family:var(--sans);transform:rotate(8deg)}
   .seg{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{padding:8px 14px;border-radius:6px;border:1.5px solid var(--ink);background:#fff;cursor:pointer;font-size:14px;color:var(--ink);user-select:none;min-height:38px;display:inline-flex;align-items:center}
+  .chip{padding:8px 12px 8px 10px;border-radius:6px;border:1.5px solid var(--ink);background:#fff;cursor:pointer;font-size:14px;color:var(--ink);user-select:none;min-height:38px;display:inline-flex;align-items:center;gap:8px}
+  .chip::before{content:"";width:16px;height:16px;border:1.5px solid var(--ink);border-radius:4px;background:#fff;flex:0 0 auto;display:inline-block;background-position:center;background-repeat:no-repeat}
   .chip.active{background:var(--yellow);font-weight:700;box-shadow:var(--shadow-sm)}
+  .chip.active::before{background-color:var(--ink);background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2 6.2L4.8 9 10 3.4' fill='none' stroke='%23f9c43a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-size:11px}
   .upload{border:1.5px dashed var(--ink);border-radius:var(--r);background:#fff;height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--muted);text-align:center;padding:10px;position:relative;overflow:hidden}
   .upload.has{border-style:solid;background:var(--sage)}
   .upload img{height:100%;max-width:100%;object-fit:contain;border-radius:4px;display:block}
@@ -160,11 +164,12 @@
     <input type="text" id="customStyle" class="hidden" style="margin-top:8px" placeholder="请输入画风，如：水彩手绘、美式卡通…" maxlength="60">
 
     <label class="lbl"><span class="n">3</span>表情动作</label>
-    <div class="row">
-      <div class="chip active fix" id="actRandom">随机</div>
-      <input type="text" id="actionInput" placeholder="或输入角色要做的表情动作，如：比心" maxlength="40">
+    <div class="seg" id="actSeg">
+      <div class="chip active" data-v="random" id="actRandom">随机动作</div>
+      <div class="chip" data-v="custom" id="actCustom">自定义动作</div>
     </div>
-    <div class="hint" id="actionHint">当前：随机动作（输入内容后以输入为准）</div>
+    <input type="text" id="actionInput" style="margin-top:8px" placeholder="输入角色要做的表情动作，如：比心（输入后以输入为准）" maxlength="40">
+    <div class="hint" id="actionHint">当前：随机动作</div>
 
     <label class="lbl"><span class="n">4</span>表情文字<small>选填</small></label>
     <div class="seg" id="textSeg">
@@ -189,7 +194,7 @@
 
   <div id="results" class="results"></div>
 
-  <div class="card sage">
+  <div class="card">
     <h2>效果展示</h2>
     <div class="example">
       <div class="ex-col"><img src="example.jpg" alt="参考图"><div class="cap">上传的参考图</div></div>
@@ -407,10 +412,12 @@
   function syncAction() {
     const v = $('actionInput').value.trim();
     $('actRandom').classList.toggle('active', !v);
-    $('actionHint').textContent = v ? `当前：${v}` : '当前：随机动作（输入内容后以输入为准）';
+    $('actCustom').classList.toggle('active', !!v);
+    $('actionHint').textContent = v ? `当前：${v}` : '当前：随机动作';
   }
   $('actionInput').addEventListener('input', syncAction);
   $('actRandom').onclick = () => { $('actionInput').value = ''; syncAction(); };
+  $('actCustom').onclick = () => { $('actionInput').focus(); };
   $('textSeg').querySelectorAll('.chip').forEach(c => c.onclick = () => {
     $('textSeg').querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
     c.classList.add('active'); textMode = c.dataset.v;
