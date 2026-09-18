@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>表情动图生成器</title>
+<style>
+  :root{
+    --bg:#f6f4ff;--card:#ffffff;--line:#e6e4f2;--text:#22223b;--muted:#7a7a95;
+    --primary:#6c5ce7;--primary-2:#a17cff;--danger:#e5484d;--ok:#16a34a;--warn:#d97706;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:radial-gradient(1200px 600px at 50% -200px,#e9e4ff 0%,var(--bg) 60%);color:var(--text);font-size:15px;line-height:1.5;min-height:100vh}
+  .wrap{max-width:640px;margin:0 auto;padding:16px 14px 60px}
+  header{text-align:center;padding:18px 0 8px;position:relative}
+  h1{font-size:26px;margin:0;letter-spacing:1px;background:linear-gradient(90deg,var(--primary),#ff7eb3);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .author{color:var(--muted);font-size:13px;margin-top:4px}
+  .author b{color:var(--text);font-weight:600;user-select:all}
+  .top-actions{position:absolute;right:0;top:18px;display:flex;gap:8px}
+  .icon-btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px;font-size:13px;color:var(--text);cursor:pointer}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-top:14px;box-shadow:0 6px 24px rgba(108,92,231,.06)}
+  .counts{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+  .counts b{color:var(--primary);font-weight:600}
+  .link{color:var(--primary);cursor:pointer;font-size:14px;user-select:none}
+  .hidden{display:none!important}
+  label.lbl{display:block;font-weight:600;margin:14px 0 8px;font-size:15px}
+  label.lbl:first-child{margin-top:0}
+  .lbl small{color:var(--muted);font-weight:400;font-size:12px;margin-left:6px}
+  .req{color:var(--danger)}
+  input[type=text],input[type=number],select,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;font-size:15px;outline:none;background:#fff;color:var(--text);-webkit-appearance:none;appearance:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,92,231,.12)}
+  select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5L6 6.5L11 1.5' stroke='%237a7a95' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:12px;padding:12px 18px;font:inherit;font-size:15px;font-weight:600;cursor:pointer;background:#eeebff;color:var(--primary);min-height:44px}
+  .btn.primary{background:linear-gradient(90deg,var(--primary),var(--primary-2));color:#fff;width:100%;font-size:17px;padding:14px;box-shadow:0 8px 20px rgba(108,92,231,.25)}
+  .btn.primary:disabled{opacity:.6;box-shadow:none;cursor:not-allowed}
+  .btn.sm{padding:8px 12px;font-size:13px;min-height:36px;border-radius:10px}
+  .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--text)}
+  .row{display:flex;gap:10px;align-items:center}
+  .row>*{flex:1}
+  .row>.fix{flex:0 0 auto}
+  .tabs{display:flex;background:#eeebff;border-radius:12px;padding:4px;margin-top:14px}
+  .tab{flex:1;text-align:center;padding:10px;border-radius:9px;font-weight:600;color:var(--muted);cursor:pointer;font-size:15px}
+  .tab.active{background:#fff;color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .seg{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px;color:var(--text);user-select:none;min-height:38px;display:inline-flex;align-items:center}
+  .chip.active{border-color:var(--primary);background:#eeebff;color:var(--primary);font-weight:600}
+  .upload{border:2px dashed #cfc9f2;border-radius:14px;background:#faf9ff;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--muted);text-align:center;padding:14px;position:relative;overflow:hidden}
+  .upload.has{border-style:solid;background:#fff}
+  .upload img{max-height:220px;max-width:100%;border-radius:10px;display:block}
+  .upload .ic{font-size:34px}
+  .upload .re{position:absolute;right:10px;bottom:10px}
+  .hint{font-size:13px;color:var(--muted);margin-top:6px}
+  .alert{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:14px}
+  .alert.err{background:#fff1f1;color:var(--danger);border:1px solid #ffd6d6}
+  .alert.ok{background:#effaf3;color:var(--ok);border:1px solid #cdebd8}
+  .alert.info{background:#eef2ff;color:#4353c9;border:1px solid #d9dfff}
+  .code-box{margin-top:10px}
+  .code-box input{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.5px}
+  .results{margin-top:14px;display:grid;grid-template-columns:1fr;gap:12px}
+  .task{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+  .task .meta{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);gap:8px;flex-wrap:wrap}
+  .task .st{font-weight:600}
+  .st.queued,.st.running{color:var(--warn)}.st.done{color:var(--ok)}.st.failed,.st.rejected{color:var(--danger)}
+  .task .body{margin-top:10px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+  .task .gif{width:100%;max-width:280px;aspect-ratio:1/1;border-radius:12px;background:#f4f2ff;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0 auto}
+  .task .gif img{width:100%;height:100%;object-fit:contain;display:block}
+  .task .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%;margin-top:10px}
+  .spinner{width:26px;height:26px;border:3px solid #ded9ff;border-top-color:var(--primary);border-radius:50%;animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .progress{text-align:center;color:var(--muted);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:30px 10px}
+  .example{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px}
+  .example img{width:42%;max-width:220px;aspect-ratio:1/1;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:#fff}
+  .example .arrow{font-size:26px;color:var(--primary)}
+  .example .cap{text-align:center;font-size:12px;color:var(--muted);margin-top:4px}
+  .ex-col{display:flex;flex-direction:column;align-items:center;width:42%;max-width:220px}
+  .ex-col img{width:100%}
+  h2{font-size:16px;margin:0;font-weight:600}
+  .modal{position:fixed;inset:0;background:rgba(20,18,40,.5);display:flex;align-items:flex-end;justify-content:center;z-index:100;padding:0}
+  .modal .box{background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:640px;max-height:88vh;overflow:auto;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+  @media(min-width:640px){.modal{align-items:center;padding:20px}.modal .box{border-radius:18px}}
+  .modal .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .modal .hd h3{margin:0;font-size:17px}
+  .x{border:none;background:#f1f0f8;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:var(--muted)}
+  .plans{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .plan{border:2px solid var(--line);border-radius:14px;padding:14px;text-align:center;cursor:pointer}
+  .plan.active{border-color:var(--primary);background:#f4f1ff}
+  .plan .t{font-weight:700;font-size:17px}
+  .plan .p{color:var(--primary);font-size:22px;font-weight:800;margin-top:4px}
+  .plan .p small{font-size:13px;font-weight:500}
+  .plan .d{font-size:12px;color:var(--muted);margin-top:2px}
+  .qr{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px}
+  .qr img{width:220px;height:220px;border:1px solid var(--line);border-radius:12px}
+  .code-show{font-family:ui-monospace,Menlo,monospace;font-size:18px;font-weight:700;background:#f4f1ff;padding:10px 14px;border-radius:10px;letter-spacing:1px;user-select:all;word-break:break-all;text-align:center}
+  .hist-list{display:grid;grid-template-columns:1fr;gap:12px}
+  .empty{text-align:center;color:var(--muted);padding:30px 0}
+  .footer{text-align:center;color:var(--muted);font-size:12px;margin-top:24px}
+  .toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:rgba(34,34,59,.92);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:200;max-width:90%;text-align:center}
+  .badge{display:inline-block;background:#eeebff;color:var(--primary);border-radius:6px;padding:1px 6px;font-size:12px;margin-right:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>表情动图生成器</h1>
+    <div class="author">作者微信：<b>duge360</b></div>
+    <div class="top-actions"><button class="icon-btn" id="histBtn">🕘 历史</button></div>
+  </header>
+
+  <!-- 次数与兑换码 -->
+  <div class="card" style="padding:14px 16px">
+    <div class="counts">
+      <span>剩余免费共用次数：<b id="freeN">--</b>次</span>
+      <span>剩余付费次数：<b id="paidN">0</b>次</span>
+    </div>
+    <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+      <span class="link" id="codeToggle">输入兑换码 ▾</span>
+      <span class="link" id="buyLink">购买次数</span>
+    </div>
+    <div class="code-box hidden" id="codeBox">
+      <div class="row">
+        <input type="text" id="codeInput" placeholder="请输入兑换码（区分大小写）" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button class="btn fix" id="buyBtn">购买</button>
+      </div>
+      <div class="alert err hidden" id="freeOut">免费次数已用完，请输入兑换码。</div>
+      <div class="hint" id="codeHint"></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="single">单次生成</div>
+    <div class="tab" data-tab="batch">批量生成</div>
+  </div>
+
+  <div class="card">
+    <label class="lbl">1. 上传角色参考图 <span class="req">*</span><small>必须上传，将参考图中角色生成表情</small></label>
+    <div class="upload" id="upload">
+      <input type="file" id="file" accept="image/*" hidden>
+      <div id="uploadEmpty"><div class="ic">🖼️</div><div>点击上传图片</div><div class="hint">支持 JPG / PNG，建议角色清晰、正面</div></div>
+      <img id="preview" class="hidden" alt="参考图">
+      <button class="btn sm ghost re hidden" id="reselect">重新选择</button>
+    </div>
+
+    <label class="lbl">2. 画风</label>
+    <select id="styleSel"><option value="random">随机（默认，随机选一种风格）</option><option value="custom">手动输入</option></select>
+    <input type="text" id="customStyle" class="hidden" style="margin-top:8px" placeholder="请输入画风，如：水彩手绘、美式卡通…" maxlength="60">
+
+    <label class="lbl">3. 表情动作</label>
+    <div class="row">
+      <div class="chip active fix" id="actRandom">🎲 随机</div>
+      <input type="text" id="actionInput" placeholder="或输入角色要做的表情动作，如：比心" maxlength="40">
+    </div>
+    <div class="hint" id="actionHint">当前：随机动作（输入内容后以输入为准）</div>
+
+    <label class="lbl">4. 表情文字<small>选填</small></label>
+    <div class="seg" id="textSeg">
+      <div class="chip active" data-v="none">无</div>
+      <div class="chip" data-v="ai">AI发挥</div>
+      <div class="chip" data-v="custom">手动输入</div>
+    </div>
+    <input type="text" id="textInput" class="hidden" style="margin-top:8px" placeholder="表情图片里要出现的文字，如：么么哒" maxlength="20">
+
+    <div id="batchRow" class="hidden">
+      <label class="lbl">5. 生成数量<small>仅付费兑换码可用</small></label>
+      <input type="number" id="countInput" min="1" max="20" value="2" inputmode="numeric">
+      <div class="hint">每个 GIF 消耗 1 次，生成失败会自动返还次数</div>
+    </div>
+
+    <div style="margin-top:18px">
+      <button class="btn primary" id="genBtn">✨ 生成表情动图</button>
+      <div class="hint" style="text-align:center;margin-top:8px">每次消耗 1 次，约需 1-3 分钟，生成失败或违规会自动返还</div>
+    </div>
+    <div id="msg"></div>
+  </div>
+
+  <div id="results" class="results"></div>
+
+  <div class="card">
+    <h2>效果展示</h2>
+    <div class="example">
+      <div class="ex-col"><img src="example.jpg" alt="参考图"><div class="cap">上传的参考图</div></div>
+      <div class="arrow">➜</div>
+      <div class="ex-col"><img src="example.gif" alt="生成的表情动图"><div class="cap">生成的表情动图</div></div>
+    </div>
+  </div>
+
+  <div class="footer">生成结果保留 48 小时，请及时保存 · 作者微信 duge360</div>
+</div>
+
+<!-- 购买弹窗 -->
+<div id="payModal" class="modal hidden">
+  <div class="box">
+    <div class="hd"><h3>购买生成次数</h3><button class="x" data-close="payModal">×</button></div>
+    <div id="payStep1">
+      <div class="plans" id="plans"></div>
+      <div class="hint" style="margin-top:10px">支付成功后自动获得兑换码并填入输入框，请妥善保存兑换码。</div>
+      <button class="btn primary" id="payBtn" style="margin-top:14px">微信支付</button>
+    </div>
+    <div id="payStep2" class="hidden">
+      <div class="qr">
+        <div id="qrWrap"><div class="progress"><div class="spinner"></div>正在生成支付二维码…</div></div>
+        <div class="hint" id="qrTip">请使用微信扫码支付，支付完成后本页自动到账</div>
+        <button class="btn sm ghost" id="payBack">返回</button>
+      </div>
+    </div>
+    <div id="payStep3" class="hidden">
+      <div class="alert ok">支付成功！您的兑换码（已自动填入，请保存）：</div>
+      <div class="code-show" id="payCode" style="margin-top:10px"></div>
+      <div class="hint" style="text-align:center;margin-top:8px">可生成 <b id="payTimes"></b> 次</div>
+      <button class="btn primary" style="margin-top:14px" data-close="payModal">开始生成</button>
+    </div>
+  </div>
+</div>
+
+<!-- 历史弹窗 -->
+<div id="histModal" class="modal hidden">
+  <div class="box">
+    <div class="hd"><h3>生成历史（48小时内）</h3><button class="x" data-close="histModal">×</button></div>
+    <div id="histList" class="hist-list"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ===================== 配置 =====================
+  const API = new URLSearchParams(location.search).get('api') || 'https://gifapi.ai2vip.com';
+  const LS = { code: 'gifmaker:code', tasks: 'gifmaker:tasks', order: 'gifmaker:pending_order' };
+  const KEEP_MS = 48 * 3600 * 1000;
+  const POLL_MS = 4000;
+  const UA = navigator.userAgent;
+  const isWeChat = /MicroMessenger/i.test(UA);
+  const isMobile = /Android|iPhone|iPad|iPod|HarmonyOS|Mobile/i.test(UA);
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let cfg = { styles: [], plans: [], max_batch: 20 };
+  let tab = 'single';
+  let fileBlob = null;
+  let textMode = 'none';
+  let activeTasks = new Map(); // task_id -> {code}
+  let pollTimer = null;
+  let selectedPlan = '1';
+  let currentOrder = null;
+  let payTimer = null;
+
+  // ===================== 工具 =====================
+  function toast(t, ms = 2500) {
+    const el = document.createElement('div'); el.className = 'toast'; el.textContent = t;
+    document.body.appendChild(el); setTimeout(() => el.remove(), ms);
+  }
+  function showMsg(html, type = 'err') { $('msg').innerHTML = html ? `<div class="alert ${type}">${html}</div>` : ''; }
+  function currentCode() { return ($('codeInput').value || '').trim(); }
+  function codeForApi() { return currentCode() || 'free'; }
+  function loadTasks() { try { return JSON.parse(localStorage.getItem(LS.tasks) || '[]'); } catch (e) { return []; } }
+  function saveTasks(list) { localStorage.setItem(LS.tasks, JSON.stringify(list)); }
+  function addLocalTask(t) {
+    const list = loadTasks().filter(x => x.task_id !== t.task_id);
+    list.unshift({ task_id: t.task_id, code: t.code, created: Date.now(), style: t.style, action: t.action });
+    saveTasks(list.slice(0, 300));
+  }
+  function validLocalTasks() { const now = Date.now(); return loadTasks().filter(t => now - t.created < KEEP_MS); }
+  function openModal(id) { $(id).classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+  function closeModal(id) { $(id).classList.add('hidden'); document.body.style.overflow = ''; if (id === 'payModal' && payTimer) { clearInterval(payTimer); payTimer = null; } }
+  document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closeModal(b.dataset.close));
+  document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
+
+  async function apiFetch(path, opt = {}) {
+    const res = await fetch(API + path, opt);
+    let data = {};
+    try { data = await res.json(); } catch (e) {}
+    data.__status = res.status;
+    return data;
+  }
+
+  // ===================== 初始化 =====================
+  async function init() {
+    $('codeInput').value = localStorage.getItem(LS.code) || '';
+    try {
+      cfg = await apiFetch('/api/config');
+      const sel = $('styleSel');
+      (cfg.styles || []).forEach(s => { const o = document.createElement('option'); o.value = s.key; o.textContent = s.name; sel.appendChild(o); });
+      $('countInput').max = cfg.max_batch || 20;
+      renderPlans();
+    } catch (e) { showMsg('服务连接失败，请刷新重试'); }
+    await refreshStatus(true);
+    handlePaymentReturn();
+  }
+
+  async function refreshStatus(initial = false) {
+    try {
+      const d = await apiFetch('/api/status?code=' + encodeURIComponent(codeForApi()));
+      $('freeN').textContent = d.free_remaining ?? '--';
+      if (d.is_free) {
+        $('paidN').textContent = '0';
+        $('codeHint').textContent = '';
+      } else if (d.code_valid) {
+        $('paidN').textContent = d.paid_remaining;
+        $('codeHint').textContent = `兑换码有效，剩余 ${d.paid_remaining} 次`;
+        $('codeHint').style.color = 'var(--ok)';
+      } else {
+        $('paidN').textContent = '0';
+        $('codeHint').textContent = '兑换码无效，请检查';
+        $('codeHint').style.color = 'var(--danger)';
+      }
+      if ((d.free_remaining ?? 1) <= 0 && d.is_free) {
+        expandCode(); $('freeOut').classList.remove('hidden');
+      } else if (initial && currentCode()) {
+        expandCode();
+      }
+    } catch (e) {}
+  }
+  function expandCode() { $('codeBox').classList.remove('hidden'); $('codeToggle').textContent = '收起 ▴'; }
+  function collapseCode() { $('codeBox').classList.add('hidden'); $('codeToggle').textContent = '输入兑换码 ▾'; }
+  $('codeToggle').onclick = () => $('codeBox').classList.contains('hidden') ? expandCode() : collapseCode();
+  let codeDeb = null;
+  $('codeInput').addEventListener('input', () => {
+    localStorage.setItem(LS.code, currentCode());
+    clearTimeout(codeDeb); codeDeb = setTimeout(refreshStatus, 500);
+  });
+
+  // ===================== Tabs =====================
+  document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active'); tab = t.dataset.tab;
+    $('batchRow').classList.toggle('hidden', tab !== 'batch');
+    $('genBtn').textContent = tab === 'batch' ? '✨ 批量生成表情动图' : '✨ 生成表情动图';
+    showMsg('');
+    if (tab === 'batch' && !currentCode()) { showMsg('批量生成仅支持付费兑换码，请先输入兑换码或购买次数', 'info'); expandCode(); }
+  });
+
+  // ===================== 上传 =====================
+  $('upload').onclick = e => { if (e.target.id !== 'reselect') $('file').click(); };
+  $('reselect').onclick = e => { e.stopPropagation(); $('file').value = ''; $('file').click(); };
+  $('file').onchange = async () => {
+    const f = $('file').files[0]; if (!f) return;
+    if (!/^image\//.test(f.type) && !/\.(jpe?g|png|webp|heic|heif|gif|bmp)$/i.test(f.name)) return toast('请选择图片文件');
+    try { fileBlob = await compressImage(f); } catch (e) { fileBlob = f; }
+    const url = URL.createObjectURL(fileBlob);
+    $('preview').src = url; $('preview').classList.remove('hidden');
+    $('uploadEmpty').classList.add('hidden'); $('reselect').classList.remove('hidden');
+    $('upload').classList.add('has');
+  };
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const max = 1024; let w = img.naturalWidth, h = img.naturalHeight;
+        if (!w || !h) return reject(new Error('bad image'));
+        if (file.size < 600 * 1024 && Math.max(w, h) <= max && /jpe?g|png/i.test(file.type)) return resolve(file);
+        const s = Math.min(1, max / Math.max(w, h)); w = Math.round(w * s); h = Math.round(h * s);
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
+        c.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', 0.9);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode failed')); };
+      img.src = url;
+    });
+  }
+
+  // ===================== 画风 / 动作 / 文字 =====================
+  $('styleSel').onchange = () => $('customStyle').classList.toggle('hidden', $('styleSel').value !== 'custom');
+  function syncAction() {
+    const v = $('actionInput').value.trim();
+    $('actRandom').classList.toggle('active', !v);
+    $('actionHint').textContent = v ? `当前：${v}` : '当前：随机动作（输入内容后以输入为准）';
+  }
+  $('actionInput').addEventListener('input', syncAction);
+  $('actRandom').onclick = () => { $('actionInput').value = ''; syncAction(); };
+  $('textSeg').querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    $('textSeg').querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active'); textMode = c.dataset.v;
+    $('textInput').classList.toggle('hidden', textMode !== 'custom');
+    if (textMode === 'custom') $('textInput').focus();
+  });
+
+  // ===================== 生成 =====================
+  $('genBtn').onclick = async () => {
+    showMsg('');
+    if (!fileBlob) { showMsg('请先上传角色参考图片'); $('upload').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+    const style = $('styleSel').value;
+    if (style === 'custom' && !$('customStyle').value.trim()) return showMsg('请输入画风');
+    if (textMode === 'custom' && !$('textInput').value.trim()) return showMsg('请输入表情文字，或选择"无"/"AI发挥"');
+    if (tab === 'batch' && !currentCode()) { expandCode(); return showMsg('免费模式仅支持单次生成，批量生成请输入付费兑换码', 'info'); }
+    let count = 1;
+    if (tab === 'batch') { count = parseInt($('countInput').value, 10); if (!count || count < 1) return showMsg('请输入生成数量'); count = Math.min(count, cfg.max_batch || 20); }
+
+    const fd = new FormData();
+    fd.append('image', fileBlob, 'ref.jpg');
+    fd.append('code', codeForApi());
+    fd.append('mode', tab);
+    fd.append('count', String(count));
+    fd.append('style', style);
+    fd.append('custom_style', $('customStyle').value.trim());
+    fd.append('action', $('actionInput').value.trim());
+    fd.append('text_mode', textMode);
+    fd.append('text', $('textInput').value.trim());
+
+    $('genBtn').disabled = true; $('genBtn').textContent = '提交中…';
+    try {
+      const d = await apiFetch('/api/generate', { method: 'POST', body: fd });
+      if (!d.success) {
+        if (d.error === 'free_exhausted') { expandCode(); $('freeOut').classList.remove('hidden'); $('freeN').textContent = d.free_remaining ?? 0; showMsg('免费次数已用完，请输入兑换码'); }
+        else if (d.error === 'insufficient') { expandCode(); showMsg((d.message || '兑换码剩余次数不足') + '，<span class="link" id="msgBuy">点击购买</span>'); $('msgBuy').onclick = openPay; }
+        else if (d.error === 'invalid_code') { expandCode(); showMsg('兑换码无效，请检查后重试'); }
+        else if (d.error === 'free_no_batch') { expandCode(); showMsg(d.message, 'info'); }
+        else showMsg(d.message || '提交失败，请重试');
+        return;
+      }
+      $('freeN').textContent = d.free_remaining; $('paidN').textContent = d.is_free ? 0 : d.paid_remaining;
+      d.tasks.forEach(t => { addLocalTask(t); activeTasks.set(t.task_id, t.code); renderTask(t, $('results'), true); });
+      startPolling();
+      $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) {
+      showMsg('网络错误，请重试');
+    } finally {
+      $('genBtn').disabled = false; $('genBtn').textContent = tab === 'batch' ? '✨ 批量生成表情动图' : '✨ 生成表情动图';
+    }
+  };
+
+  const ST = { queued: '排队中', running: '生成中', done: '生成完成', failed: '生成失败', rejected: '生成结果违规' };
+  function renderTask(t, container, prepend = false) {
+    let el = container.querySelector(`[data-tid="${t.task_id}"]`);
+    if (!el) { el = document.createElement('div'); el.className = 'task'; el.dataset.tid = t.task_id; prepend ? container.prepend(el) : container.appendChild(el); }
+    const created = t.created_at ? t.created_at.replace('T', ' ').slice(5, 16) : '';
+    let body = '';
+    if (t.status === 'done' && t.gif_url) {
+      body = `<div class="gif"><img src="${esc(t.gif_url)}" alt="表情动图"></div>
+        <div class="acts">
+          ${isMobile || isWeChat ? `<span class="hint">长按上方图片可保存到手机</span>` : `<button class="btn sm" data-dl="${esc(t.gif_url)}">下载 GIF</button>`}
+          <a class="btn sm ghost" href="${esc(t.gif_url)}" target="_blank" rel="noopener">打开 GIF</a>
+          ${t.image_url ? `<a class="btn sm ghost" href="${esc(t.image_url)}" target="_blank" rel="noopener">查看静态图</a>` : ''}
+        </div>`;
+    } else if (t.status === 'failed') {
+      body = `<div class="alert err" style="width:100%">生成失败，请重试。<span style="color:var(--muted)">（次数已返还）</span></div>`;
+    } else if (t.status === 'rejected') {
+      body = `<div class="alert err" style="width:100%">生成结果违规，请修改图片或提示词。<span style="color:var(--muted)">（次数已返还）</span></div>`;
+    } else {
+      body = `<div class="progress" style="width:100%"><div class="spinner"></div><div>${t.status === 'queued' ? '排队中，请稍候…' : 'AI 正在绘制 16 帧动作并合成 GIF…'}</div><div>约需 1-3 分钟，可离开后在"历史"中查看</div></div>`;
+    }
+    el.innerHTML = `<div class="meta">
+        <span><span class="badge">${esc(t.style || '')}</span>${esc(t.action || '')}${t.text ? ' · 文字：' + esc(t.text) : t.text_mode === 'ai' ? ' · 文字：AI发挥' : ''}</span>
+        <span class="st ${esc(t.status)}">${ST[t.status] || t.status}</span>
+      </div>
+      <div class="hint" style="margin-top:2px">${created} · ID ${esc(t.task_id)}</div>
+      <div class="body">${body}</div>`;
+  }
+  document.body.addEventListener('click', async e => {
+    const b = e.target.closest('[data-dl]'); if (!b) return;
+    const url = b.dataset.dl; b.disabled = true; b.textContent = '下载中…';
+    try {
+      const r = await fetch(url); const blob = await r.blob();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = url.split('/').pop() || 'emoji.gif';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    } catch (err) { window.open(url, '_blank'); }
+    b.disabled = false; b.textContent = '下载 GIF';
+  });
+
+  function startPolling() { if (!pollTimer) pollTimer = setInterval(pollActive, POLL_MS); }
+  async function pollActive() {
+    if (!activeTasks.size) { clearInterval(pollTimer); pollTimer = null; return; }
+    const items = [...activeTasks].map(([task_id, code]) => ({ task_id, code }));
+    try {
+      const d = await apiFetch('/api/tasks/query', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items }) });
+      (d.tasks || []).forEach(t => {
+        renderTask(t, $('results'));
+        if (['done', 'failed', 'rejected'].includes(t.status)) {
+          activeTasks.delete(t.task_id);
+          if (t.status !== 'done') refreshStatus();
+        }
+      });
+    } catch (e) {}
+  }
+
+  // ===================== 历史 =====================
+  $('histBtn').onclick = async () => {
+    openModal('histModal');
+    const list = validLocalTasks();
+    saveTasks(list);
+    if (!list.length) { $('histList').innerHTML = '<div class="empty">暂无 48 小时内的生成记录</div>'; return; }
+    $('histList').innerHTML = '<div class="progress"><div class="spinner"></div>加载中…</div>';
+    try {
+      const d = await apiFetch('/api/tasks/query', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: list.map(t => ({ task_id: t.task_id, code: t.code })) }) });
+      $('histList').innerHTML = '';
+      const tasks = d.tasks || [];
+      if (!tasks.length) { $('histList').innerHTML = '<div class="empty">暂无可展示的记录</div>'; return; }
+      tasks.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+      tasks.forEach(t => { renderTask(t, $('histList')); if (['queued', 'running'].includes(t.status)) { activeTasks.set(t.task_id, t.code); } });
+      if (activeTasks.size) startPolling();
+    } catch (e) { $('histList').innerHTML = '<div class="empty">加载失败，请重试</div>'; }
+  };
+
+  // ===================== 支付 =====================
+  function renderPlans() {
+    $('plans').innerHTML = (cfg.plans || []).map(p => `
+      <div class="plan ${p.plan === selectedPlan ? 'active' : ''}" data-plan="${p.plan}">
+        <div class="t">购买 ${p.times} 次</div>
+        <div class="p"><small>¥</small>${p.price}</div>
+        <div class="d">${p.times > 1 ? '可批量生成 · 更划算' : '体验一次'}</div>
+      </div>`).join('');
+    $('plans').querySelectorAll('.plan').forEach(el => el.onclick = () => { selectedPlan = el.dataset.plan; renderPlans(); });
+  }
+  function openPay() {
+    $('payStep1').classList.remove('hidden'); $('payStep2').classList.add('hidden'); $('payStep3').classList.add('hidden');
+    renderPlans(); openModal('payModal');
+  }
+  $('buyBtn').onclick = openPay; $('buyLink').onclick = openPay;
+  $('payBack').onclick = () => { if (payTimer) { clearInterval(payTimer); payTimer = null; } $('payStep2').classList.add('hidden'); $('payStep1').classList.remove('hidden'); };
+  $('payBtn').onclick = async () => {
+    $('payBtn').disabled = true; $('payBtn').textContent = '正在创建订单…';
+    try {
+      const returnUrl = location.origin + location.pathname;
+      const d = await apiFetch('/api/payment/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: selectedPlan, return_url: returnUrl }) });
+      if (!d.success) return toast(d.message || '支付创建失败，请重试');
+      currentOrder = d.order_id;
+      localStorage.setItem(LS.order, d.order_id);
+      if ((isMobile || isWeChat) && d.url) {
+        // 手机 / 微信内：跳转到支付页，支付完成后返回本页自动到账
+        location.href = d.url;
+        return;
+      }
+      $('payStep1').classList.add('hidden'); $('payStep2').classList.remove('hidden');
+      if (d.url_qrcode) {
+        $('qrWrap').innerHTML = `<img src="${esc(d.url_qrcode)}" alt="微信支付二维码">`;
+        $('qrTip').textContent = `请使用微信扫码支付 ¥${d.price}，支付完成后自动到账`;
+      } else if (d.url) {
+        $('qrWrap').innerHTML = `<a class="btn primary" href="${esc(d.url)}" target="_blank">打开支付页面</a>`;
+      }
+      startPayPolling(d.order_id);
+    } catch (e) { toast('网络错误，请重试'); }
+    finally { $('payBtn').disabled = false; $('payBtn').textContent = '微信支付'; }
+  };
+  function startPayPolling(orderId) {
+    if (payTimer) clearInterval(payTimer);
+    let n = 0;
+    payTimer = setInterval(async () => {
+      if (++n > 200) { clearInterval(payTimer); payTimer = null; return; }
+      try {
+        const d = await apiFetch('/api/payment/status/' + encodeURIComponent(orderId));
+        if (d.status === 'paid' && d.code) { clearInterval(payTimer); payTimer = null; onPaid(d); }
+      } catch (e) {}
+    }, 3000);
+  }
+  function onPaid(d) {
+    localStorage.removeItem(LS.order);
+    $('codeInput').value = d.code; localStorage.setItem(LS.code, d.code);
+    expandCode(); $('freeOut').classList.add('hidden');
+    $('payStep1').classList.add('hidden'); $('payStep2').classList.add('hidden'); $('payStep3').classList.remove('hidden');
+    $('payCode').textContent = d.code; $('payTimes').textContent = d.times;
+    if ($('payModal').classList.contains('hidden')) openModal('payModal');
+    refreshStatus();
+  }
+  async function handlePaymentReturn() {
+    const params = new URLSearchParams(location.search);
+    const fromUrl = params.get('payment_order');
+    const pending = fromUrl || localStorage.getItem(LS.order);
+    if (fromUrl) { params.delete('payment_order'); const q = params.toString(); history.replaceState(null, '', location.pathname + (q ? '?' + q : '')); }
+    if (!pending) return;
+    // 返回页面后确认支付结果（最多轮询 ~60 秒）
+    let tries = 0;
+    const check = async () => {
+      try {
+        const d = await apiFetch('/api/payment/status/' + encodeURIComponent(pending));
+        if (d.status === 'paid' && d.code) { onPaid(d); return; }
+        if (d.__status === 404) { localStorage.removeItem(LS.order); return; }
+      } catch (e) {}
+      if (++tries < (fromUrl ? 20 : 3)) setTimeout(check, 3000);
+      else if (!fromUrl) { /* 保留待确认订单，下次打开继续确认 */ }
+    };
+    if (fromUrl) toast('正在确认支付结果…');
+    check();
+  }
+
+  // 微信内长按保存提示、页面可见时补拉进度
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && activeTasks.size) pollActive(); });
+
+  init();
+})();
+</script>
+</body>
+</html>
