@@ -147,6 +147,15 @@
   </div>
 
   <!-- Tabs -->
+  <div class="card">
+    <h2>效果展示</h2>
+    <div class="example">
+      <div class="ex-col"><img src="example.jpg" alt="参考图"><div class="cap">上传的参考图</div></div>
+      <div class="arrow">➜</div>
+      <div class="ex-col"><img src="example.gif" alt="生成的表情动图"><div class="cap">生成的表情动图</div></div>
+    </div>
+  </div>
+
   <div class="tabs">
     <div class="tab active" data-tab="single">单次生成</div>
     <div class="tab" data-tab="batch">批量生成</div>
@@ -174,8 +183,8 @@
 
     <label class="lbl"><span class="n">4</span>表情文字<small>选填</small></label>
     <div class="seg" id="textSeg">
-      <div class="chip active" data-v="none">无</div>
-      <div class="chip" data-v="ai">AI发挥</div>
+      <div class="chip" data-v="none">无</div>
+      <div class="chip active" data-v="ai">AI发挥</div>
       <div class="chip" data-v="custom">手动输入</div>
     </div>
     <input type="text" id="textInput" class="hidden" style="margin-top:8px" placeholder="表情图片里要出现的文字，如：么么哒" maxlength="20">
@@ -194,15 +203,6 @@
   </div>
 
   <div id="results" class="results"></div>
-
-  <div class="card">
-    <h2>效果展示</h2>
-    <div class="example">
-      <div class="ex-col"><img src="example.jpg" alt="参考图"><div class="cap">上传的参考图</div></div>
-      <div class="arrow">➜</div>
-      <div class="ex-col"><img src="example.gif" alt="生成的表情动图"><div class="cap">生成的表情动图</div></div>
-    </div>
-  </div>
 
   <div class="footer">生成结果保留 48 小时，请及时保存 · 作者微信 duge360</div>
 </div>
@@ -265,7 +265,7 @@
   let cfg = { styles: [], plans: [], max_batch: 20 };
   let tab = 'single';
   let fileBlob = null;
-  let textMode = 'none';
+  let textMode = 'ai';
   let activeTasks = new Map(); // task_id -> code label
   let submitting = false;
   let pollTimer = null;
